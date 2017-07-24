@@ -15,10 +15,10 @@ void Editor::updateNoteState() {
 			plevNoteTime = note->Time;
 			if (typeid(*note) == typeid(PlayableNote))
 			{
-				note->setPosition(getLaneOffset() + dynamic_cast<PlayableNote*>(note.get())->Lane * m_LaneWidth, -currentNoteTick / 192 * getBeatPerHeight());
+				note->setPosition(getLaneOffset() + dynamic_cast<PlayableNote*>(note.get())->Lane * m_LaneWidth, static_cast<int>(-currentNoteTick / 192 * getBeatPerHeight()));
 			}
 			else if (typeid(*note) == typeid(ChangeTempo)) {
-				note->setPosition(512, -currentNoteTick / 192 * getBeatPerHeight());
+				note->setPosition(512, static_cast<int>(-currentNoteTick / 192 * getBeatPerHeight()));
 				currentTempo = dynamic_cast<ChangeTempo*>(note.get())->getTempo();
 				//TempoChangeLeap.Add(note);
 			}
@@ -180,14 +180,14 @@ void Editor::draw() {
 		double gridHeight = getBeatPerHeight() * 4 / m_division;
 		double y = measureBeginY;
 
-		Rect(getLaneOffset() - m_LaneWidth / 2, y, 462, 1).draw(Palette::Green);
+		Rect(getLaneOffset() - m_LaneWidth / 2, static_cast<int>(y), 462, 1).draw(Palette::Green);
 
 		int emphasizeInterval = m_division / 4;
 
 		for (int i = 1; i < lineCount; i++)
 		{
 			y -= gridHeight;
-			Rect(getLaneOffset() - m_LaneWidth / 2, y, 462, 1).draw(i % emphasizeInterval == 0 ? Palette::White : Palette::Gray);
+			Rect(getLaneOffset() - m_LaneWidth / 2, static_cast<int>(y), 462, 1).draw(i % emphasizeInterval == 0 ? Palette::White : Palette::Gray);
 		}
 
 		measure->BeginY = measureBeginY;
@@ -197,7 +197,7 @@ void Editor::draw() {
 	}
 
 	//è¨êﬂî‘çÜ
-	for (int i = 0; i < m_measures.size(); ++i) {
+	for (size_t i = 0; i < m_measures.size(); ++i) {
 		FontAsset(L"editor")(Pad(i, { 3, L'0' })).drawAt(getLaneOffset() - 70, m_measures[i]->BeginY);
 	}
 
