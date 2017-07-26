@@ -7,10 +7,17 @@ private:
 	NoteType m_type;
 
 public:
-	PlayableNote(int tick, int lane, NoteType type);
+	std::shared_ptr<PlayableNote> ConnectNote = nullptr;
+	int Channel;
+
+	PlayableNote(int tick, int lane, int channel, NoteType type);
 
 	PlayableNote() = default;
 	~PlayableNote() = default;
 
 	virtual void draw() const;
+
+	void drawRibbon() const;
+
+	NoteType getNoteType();
 };
