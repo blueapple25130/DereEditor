@@ -18,6 +18,8 @@ public:
 	int Lane;
 
 	Note(int tick, int lane);
+	Note() = default;
+	virtual ~Note() = default;
 
 	virtual void draw() const = 0;
 
