@@ -2,10 +2,11 @@
 
 
 PlayableNote::PlayableNote(int tick, int lane, int channel, NoteType type) :
-	Note(tick, lane)
+	Note(tick)
 {
 	m_type = type;
 	Channel = channel;
+	Lane = lane;
 }
 
 void PlayableNote::draw() const {
@@ -27,6 +28,10 @@ void PlayableNote::draw() const {
 		TextureAsset(L"notes")(60, 48, 60, 48).drawAt(m_position);
 		break;
 	}
+}
+
+void PlayableNote::drawInfo() const {
+
 }
 
 void PlayableNote::drawRibbon() const {

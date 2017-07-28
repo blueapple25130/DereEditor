@@ -1,9 +1,8 @@
 #include "Note.h"
 
 
-Note::Note(int tick, int lane) {
+Note::Note(int tick) {
 	Tick = tick;
-	Lane = lane;
 }
 
 

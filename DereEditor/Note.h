@@ -15,9 +15,8 @@ protected:
 public:
 	double Time;
 	int Tick;
-	int Lane;
 
-	Note(int tick, int lane);
+	Note(int tick);
 	Note() = default;
 	virtual ~Note() = default;
 
