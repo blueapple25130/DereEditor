@@ -13,4 +13,5 @@ public:
 	virtual void draw() const;
 
 	double getTempo();
+	double getY();
 };
