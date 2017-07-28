@@ -12,17 +12,21 @@ void Main()
 	SoundAsset::Register(L"tap", L"/3000");
 	SoundAsset::Register(L"flick", L"/3001");
 	SoundAsset::Register(L"slide", L"/3002");
+	SoundAsset::Register(L"music", L"C:/Users/work/Documents/346lab/music/Dandan.ogg");
 	FontAsset::Register(L"editor", 16);
 
 	Editor editor;
 
 	Graphics::SetVSyncEnabled(true);
 
+	SoundAsset(L"music").play();
+
 	while (System::Update()) {
 		ClearPrint();
 		Println(L"[Info]");
 		Println(L"FPS:", Profiler::FPS());
 		Println(L"DrawCall:", Profiler::Graphics().num_drawCalls());
+		Println(L"Time:", SoundAsset(L"music").streamPosSec());
 		editor.update();
 		editor.draw();
 	}
