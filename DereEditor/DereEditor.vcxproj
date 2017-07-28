@@ -163,6 +163,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="ChangeTempo.cpp" />
+    <ClCompile Include="Deleste.cpp" />
     <ClCompile Include="Editor.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Measure.cpp" />
@@ -283,6 +284,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ChangeTempo.h" />
+    <ClInclude Include="Deleste.h" />
     <ClInclude Include="Editor.h" />
     <ClInclude Include="Measure.h" />
     <ClInclude Include="Note.h" />
