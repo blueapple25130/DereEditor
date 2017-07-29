@@ -19,8 +19,6 @@ void Main()
 
 	Graphics::SetVSyncEnabled(true);
 
-	SoundAsset(L"music").play();
-
 	while (System::Update()) {
 		ClearPrint();
 		Println(L"[Info]");
