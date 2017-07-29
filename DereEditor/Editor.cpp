@@ -20,7 +20,7 @@ void Editor::updateNoteState() {
 			plevNoteTime = note->Time;
 			if (typeid(*note) == typeid(PlayableNote))
 			{
-				note->setPosition(getLaneOffset() + std::dynamic_pointer_cast<PlayableNote>(note)->Lane * m_LaneWidth, static_cast<int>(-currentNoteTick / 192 * getBeatPerHeight()));
+				note->setPosition(getLaneOffset() + std::dynamic_pointer_cast<PlayableNote>(note)->FinishPos * m_LaneWidth, static_cast<int>(-currentNoteTick / 192 * getBeatPerHeight()));
 				m_playableNotes.push_back(std::dynamic_pointer_cast<PlayableNote>(note));
 			}
 			else if (typeid(*note) == typeid(ChangeTempo)) {
@@ -44,11 +44,11 @@ void Editor::updateNoteState() {
 			auto connectNote = std::find_if(m_playableNotes.begin(), m_playableNotes.end(), [&](std::shared_ptr<PlayableNote> x) {return x->Time > (*currentNote)->Time &&  x->Channel == (*currentNote)->Channel && x->Time - (*currentNote)->Time < 1.0; });
 			if (connectNote != m_playableNotes.end()) {
 				if ((*connectNote)->Channel % 4 < 2) {
-					if ((*connectNote)->Lane < (*currentNote)->Lane && (*currentNote)->getNoteType() == NoteType::LFlick && ((*connectNote)->getNoteType() == NoteType::LFlick || (*connectNote)->getNoteType() == NoteType::RFlick))
+					if ((*connectNote)->FinishPos < (*currentNote)->FinishPos && (*currentNote)->getNoteType() == NoteType::LFlick && ((*connectNote)->getNoteType() == NoteType::LFlick || (*connectNote)->getNoteType() == NoteType::RFlick))
 					{
 						(*currentNote)->ConnectNote = (*connectNote);
 					}
-					else if ((*connectNote)->Lane > (*currentNote)->Lane && (*currentNote)->getNoteType() == NoteType::RFlick && ((*connectNote)->getNoteType() == NoteType::LFlick || (*connectNote)->getNoteType() == NoteType::RFlick))
+					else if ((*connectNote)->FinishPos > (*currentNote)->FinishPos && (*currentNote)->getNoteType() == NoteType::RFlick && ((*connectNote)->getNoteType() == NoteType::LFlick || (*connectNote)->getNoteType() == NoteType::RFlick))
 					{
 						(*currentNote)->ConnectNote = (*connectNote);
 
@@ -62,7 +62,7 @@ void Editor::updateNoteState() {
 		break;
 		case NoteType::Long:
 		{
-			auto connectNote = std::find_if(m_playableNotes.begin(), m_playableNotes.end(), [&](std::shared_ptr<PlayableNote> x) {return x->Time > (*currentNote)->Time && x->Lane == (*currentNote)->Lane; });
+			auto connectNote = std::find_if(m_playableNotes.begin(), m_playableNotes.end(), [&](std::shared_ptr<PlayableNote> x) {return x->Time > (*currentNote)->Time && x->FinishPos == (*currentNote)->FinishPos; });
 			if (connectNote != m_playableNotes.end())
 				(*currentNote)->ConnectNote = (*connectNote);
 		}
@@ -79,7 +79,7 @@ void Editor::updateNoteState() {
 }
 
 double Editor::getBeatPerHeight() {
-	return m_zoom * BeatPerHeight;
+	return m_zoom * m_beatPerHeight;
 }
 
 //TODO:可変ウィンドウサイズ対応
@@ -88,17 +88,40 @@ int Editor::getLaneOffset() {
 	return m_LaneOffset;
 }
 
-void Editor::setOrRemovePlaybleNote(std::vector<std::shared_ptr<Note>> &notes, int tick, int lane, NoteType type) {
+void Editor::setOrRemovePlaybleNote(std::vector<std::shared_ptr<Note>> &notes, int tick, int finishPos, NoteType type) {
+	int startPos = -1;
+
+	if (Input::Key1.pressed) {
+		startPos = 0;
+	}
+	else if (Input::Key2.pressed) {
+		startPos = 1;
+	}
+	else if (Input::Key3.pressed) {
+		startPos = 2;
+	}
+	else if (Input::Key4.pressed) {
+		startPos = 3;
+	}
+	else if (Input::Key5.pressed) {
+		startPos = 4;
+	}
+
 	for (auto it = notes.begin(); it != notes.end();) {
-		if (typeid(**it) == typeid(PlayableNote) && (*it)->Tick == tick && std::dynamic_pointer_cast<PlayableNote>(*it)->Lane == lane) {
-			notes.erase(it);
+		if (typeid(**it) == typeid(PlayableNote) && (*it)->Tick == tick && std::dynamic_pointer_cast<PlayableNote>(*it)->FinishPos == finishPos) {
+			if (startPos == -1) {
+				notes.erase(it);
+			}
+			else {
+				std::dynamic_pointer_cast<PlayableNote>(*it)->setStartPos(startPos);
+			}
 			return;
 		}
 		else {
 			++it;
 		}
 	}
-	notes.push_back(std::make_shared<PlayableNote>(tick, lane, m_channel, type));
+	notes.push_back(std::make_shared<PlayableNote>(tick, startPos == -1 ? finishPos : startPos, finishPos, m_channel, type));
 }
 
 void Editor::setOrRemoveChangeTempo(std::vector<std::shared_ptr<Note>> &notes, int tick, double tempo) {
@@ -127,7 +150,7 @@ void Editor::addMeasure() {
 	}
 
 	m_measures.insert(m_measures.begin() + m_selectedMeasure, std::make_shared<Measure>());
-	++m_selectedMeasure;
+	m_selectedMeasure;
 	updateNoteState();
 }
 
@@ -139,7 +162,7 @@ void Editor::removeMeasure() {
 
 	if (m_measures[m_selectedMeasure]->getNotes().size() > 0) {
 		if (MessageBox::Show(L"ノートが含まれています。小節を削除しますか？", MessageBoxStyle::YesNo) == MessageBoxCommand::Yes) {
-			m_measures.erase(m_measures.begin() + m_selectedMeasure--);
+			m_measures.erase(m_measures.begin() + m_selectedMeasure);
 			if (m_measures.size() == m_selectedMeasure) {
 				--m_selectedMeasure;
 			}
@@ -256,20 +279,41 @@ void Editor::removeLane() {
 	//TODO:レーン追加
 }
 
+void Editor::divisionUp() {
+	if (m_division != m_divisions.size() - 1) {
+		++m_division;
+		m_gui.text(L"division").text = Format(getDivision());
+	}
+}
+
+void Editor::divisionDown() {
+	if (m_division != 0) {
+		--m_division;
+		m_gui.text(L"division").text = Format(getDivision());
+	}
+}
+
+int Editor::getDivision() {
+	return m_divisions[m_division];
+}
 
 Editor::Editor() :
-	m_rect(0, 0, 512, Window::ClientRect().h),
 	m_gui(GUIStyle::Default)
 {
 	//GUI初期化
 
-	m_gui.setTitle(L"メニュー");
 	m_gui.addln(GUIText::Create(L"[グリッド]"));
-	m_gui.add(GUIText::Create(L"ズーム"));
+	m_gui.add(GUIText::Create(L"ズーム　　　"));
 	m_gui.add(L"zoom", GUISlider::Create(0.2, 2.0, 1.0));
 	m_gui.addln(L"zoom-ratio", GUIText::Create(L"100%"));
+	m_gui.add(GUIText::Create(L"分割数　　　"));
+	m_gui.add(L"division-down", GUIButton::Create(L"<"));
+	m_gui.add(L"division", GUIText::Create(L"8"));
+	m_gui.addln(L"division-up", GUIButton::Create(L">"));
+	m_gui.add(GUIText::Create(L"情報を表示する"));
+	m_gui.addln(L"show-info", GUIToggleSwitch::Create(L"", L"", false));
 
-	m_gui.add(GUIHorizontalLine::Create(1));
+	m_gui.add(GUIHorizontalLine::Create());
 
 	m_gui.addln(GUIText::Create(L"[ノート]"));
 	m_gui.add(GUIText::Create(L"チャンネル　"));
@@ -283,35 +327,48 @@ Editor::Editor() :
 	m_gui.add(GUIText::Create(L"テンポ変更　"));
 	m_gui.addln(L"tempo", GUITextField::Create(none));
 
-	m_gui.add(GUIHorizontalLine::Create(1));
+	m_gui.add(GUIHorizontalLine::Create());
 
 	m_gui.addln(GUIText::Create(L"[小節]"));
-	m_gui.add(L"measure-count", GUITextField::Create(none));
-	m_gui.add(GUIText::Create(L"個"));
-	m_gui.addln(L"add-measure", GUIButton::Create(L"追加"));
+	m_gui.add(L"add-measure", GUIButton::Create(L"挿入"));
 	m_gui.addln(L"remove-measure", GUIButton::Create(L"削除"));
+
+	m_gui.add(GUIText::Create(L"拍子変更　　"));
 	m_gui.add(L"measure-length", GUITextField::Create(none));
 	m_gui.add(L"set-measure", GUIButton::Create(L"変更"));
+	m_gui.addln(L"set-measure", GUIButton::Create(L"削除"));
 
-	m_gui.add(GUIHorizontalLine::Create(1));
+	m_gui.add(GUIHorizontalLine::Create());
 
-	m_gui.addln(GUIText::Create(L"[音源]"));
-	m_gui.add(GUIText::Create(L"基準テンポ　"));
-	m_gui.addln(L"standard-tempo", GUITextField::Create(none));
+	m_gui.addln(GUIText::Create(L"[譜面]"));
 	m_gui.add(GUIText::Create(L"オフセット　"));
 	m_gui.addln(L"offset", GUITextField::Create(none));
+	m_gui.add(GUIText::Create(L"開始テンポ　"));
+	m_gui.addln(L"standard-tempo", GUITextField::Create(none));
+	m_gui.add(L"edit-header", GUIButton::Create(L"ヘッダー編集"));
+
+	m_gui.add(GUIHorizontalLine::Create());
 
 	m_gui.addln(GUIText::Create(L"[プレイヤー]"));
 	m_gui.add(L"play-music", GUIButton::Create(L"Play"));
 	m_gui.addln(L"pause-music", GUIButton::Create(L"Pause"));
-	m_gui.addln(L"seek-music", GUISlider::Create(0.0, 1.0, 0.0, 300));
+	m_gui.addln(L"seek-music", GUISlider::Create(0.0, 1.0, 0.0, 360));
+
 
 	m_gui.textField(L"tempo").setText(L"120");
 	m_gui.textField(L"measure-length").setText(L"4/4");
 	m_gui.textField(L"standard-tempo").setText(L"120");
 	m_gui.textField(L"offset").setText(L"0");
 
-	m_gui.setPos(m_rect.tr);
+	m_gui.textField(L"tempo").style.width = 70;
+	m_gui.textField(L"measure-length").style.width = 70;
+	m_gui.textField(L"standard-tempo").style.width = 70;
+	m_gui.textField(L"offset").style.width = 70;
+
+	m_gui.style.showTitle = false;
+	m_gui.style.borderRadius = 0;
+	m_gui.style.width = 400;
+	m_gui.setPos(Window::ClientRect().w - 400, 0);
 
 	for (size_t i = 0; i < MEASURE_DEFAULT; ++i) {
 		m_measures.push_back(std::make_shared<Measure>());
@@ -319,6 +376,7 @@ Editor::Editor() :
 }
 
 void Editor::update() {
+
 	//GUI関連
 	if (m_gui.slider(L"zoom").hasChanged) {
 		changeZoomRatio();
@@ -337,6 +395,12 @@ void Editor::update() {
 	}
 	else if (m_gui.button(L"channel-down").pushed) {
 		channelDown();
+	}
+	else if (m_gui.button(L"division-up").pushed) {
+		divisionUp();
+	}
+	else if (m_gui.button(L"division-down").pushed) {
+		divisionDown();
 	}
 	else if (m_gui.textField(L"standard-tempo").hasChanged) {
 		m_standardTempo = Parse<double>(m_gui.textField(L"standard-tempo").text);
@@ -367,6 +431,19 @@ void Editor::update() {
 	m_gui.slider(L"seek-music").setValue(getMusic().streamPosSec() / getMusic().lengthSec());
 
 	//TODO:キーショートカット
+	if (Input::KeyA.clicked) {
+		channelDown();
+	}
+	else if (Input::KeyD.clicked) {
+		channelUp();
+	}
+	else if (Input::KeyW.clicked) {
+		divisionUp();
+	}
+	else if (Input::KeyS.clicked) {
+		divisionDown();
+	}
+
 	if (Input::KeyControl.pressed) {
 		if (Input::KeyS.clicked) {
 			//TODO:Save
@@ -413,38 +490,47 @@ void Editor::update() {
 			note->IsJudged = note->Time - seekTime < 0.0;
 	}
 
+	if (Input::KeyShift.pressed && Mouse::Wheel() != 0) {
+		m_gui.slider(L"zoom").setValue(m_gui.slider(L"zoom").value - 0.05 * Mouse::Wheel());
+		changeZoomRatio();
+	}
 
-	if (m_rect.leftClicked || m_rect.rightClicked) {
+
+	if (Input::MouseL.clicked || Input::MouseR.clicked) {
 
 		Vec2 mousePos = Mouse::PosF().movedBy(0, -Window::ClientRect().h + m_gridOffset + getScroll());
 
 		int lane = -1;
 		int offset = getLaneOffset() - m_LaneWidth / 2;
 		EditType editType = EditType::None;
-		int allLaneCount = m_laneCount + 1;
-		for (int i = 0; i < allLaneCount + 1; i++)
-		{
-			if (offset + i * m_LaneWidth <= mousePos.x && mousePos.x < offset + (i + 1) * m_LaneWidth)
-			{
-				lane = i;
-			}
+
+		if (0 <= mousePos.x && mousePos.x < offset) {
+			editType = EditType::Measure;
 		}
-		if (0 <= lane && lane < m_laneCount) {
-			editType = EditType::PlayableNote;
-		}
-		else if (lane == m_laneCount) {
+		else if (offset + m_laneCount * m_LaneWidth <= mousePos.x && mousePos.x < offset + (m_laneCount + 1) * m_LaneWidth) {
 			editType = EditType::ChangeTempo;
 		}
 		else {
-			editType = EditType::None;
+			for (int i = 0; i < m_laneCount; i++)
+			{
+				if (offset + i * m_LaneWidth <= mousePos.x && mousePos.x < offset + (i + 1) * m_LaneWidth)
+				{
+					lane = i;
+					editType = EditType::PlayableNote;
+				}
+			}
 		}
 
-		if (editType != EditType::None) {
-			double gridHeightHalf = getBeatPerHeight() * 4 / m_division / 2;
+		switch (editType)
+		{
+		case EditType::PlayableNote:
+		case EditType::ChangeTempo:
+		{
+			double gridHeightHalf = getBeatPerHeight() * 4 / getDivision() / 2;
 
 			for (auto it = m_measures.begin(); it != m_measures.end(); ++it) {
 
-				int lineCount = static_cast<int>(Ceil(m_division * (*it)->getLength()));
+				int lineCount = static_cast<int>(Ceil(getDivision() * (*it)->getLength()));
 				double y = (*it)->BeginY;
 				int tick = -1;
 
@@ -460,14 +546,14 @@ void Editor::update() {
 				for (int i = 1; i < lineCount - 1; i++)
 				{
 					if (y - gridHeightHalf <= mousePos.y && mousePos.y < y + gridHeightHalf)
-						tick = 192 / (m_division / 4) * i;
+						tick = 192 / (getDivision() / 4) * i;
 					y -= gridHeightHalf * 2;
 				}
 				//最後
 				//分割線が小節開始線のみの場合、スキップ
 				//分割線と小節終線(次の小節の開始線)の中間以上、分割線+グリッドの高さ/2未満で判定
 				if (lineCount != 1 && y - (y - (*it)->EndY) / 2 <= mousePos.y && mousePos.y < y + gridHeightHalf)
-					tick = 192 / (m_division / 4) * (lineCount - 1);
+					tick = 192 / (getDivision() / 4) * (lineCount - 1);
 
 				if (tick != -1) {
 					switch (editType)
@@ -483,6 +569,15 @@ void Editor::update() {
 			}
 			updateNoteState();
 		}
+		break;
+		case EditType::Measure:
+			for (auto it = m_measures.begin(); it != m_measures.end(); ++it) {
+				if ((*it)->EndY <= mousePos.y && mousePos.y < (*it)->BeginY) {
+					m_selectedMeasure = std::distance(m_measures.begin(), it);
+				}
+			}
+			break;
+		}
 	}
 	playSE();
 }
@@ -494,7 +589,7 @@ void Editor::draw() {
 	const Mat3x2 scrollMatrix = Mat3x2::Identity().translate(0, Window::ClientRect().h - m_gridOffset - getScroll());
 
 	const Line divLine(getLaneOffset() - m_LaneWidth / 2, -0.5, getLaneOffset() - m_LaneWidth / 2 + m_LaneWidth * (m_laneCount + 1), -0.5);
-	const Line laneLine(-0.5,0, -0.5,Window::ClientRect().h);
+	const Line laneLine(-0.5, 0, -0.5, Window::ClientRect().h);
 	//m_rect.draw(Color(30, 30, 30));
 
 	//レーン
@@ -509,19 +604,19 @@ void Editor::draw() {
 	//小節
 	double measureBeginY = 0;
 	for (auto& measure : m_measures) {
-		int lineCount = static_cast<int>(Ceil(m_division * measure->getLength()));
+		int lineCount = static_cast<int>(Ceil(getDivision() * measure->getLength()));
 
-		double gridHeight = getBeatPerHeight() * 4 / m_division;
+		double gridHeight = getBeatPerHeight() * 4 / getDivision();
 		double y = measureBeginY;
 
 		divLine.movedBy(0, y).draw(Palette::Green);
 
-		int emphasizeInterval = m_division / 4;
+		int emphasizeInterval = getDivision() / 4;
 
 		for (int i = 1; i < lineCount; i++)
 		{
 			y -= gridHeight;
-			divLine.movedBy(0,y).draw(i % emphasizeInterval == 0 ? Palette::White : Palette::Gray);
+			divLine.movedBy(0, y).draw(i % emphasizeInterval == 0 ? Palette::White : Palette::Gray);
 		}
 
 		measure->BeginY = measureBeginY;
@@ -532,7 +627,7 @@ void Editor::draw() {
 
 	Graphics2D::ClearTransform();
 
-	divLine.movedBy(0,Window::ClientRect().h - m_gridOffset).draw(Palette::Red);
+	divLine.movedBy(0, Window::ClientRect().h - m_gridOffset).draw(Palette::Red);
 
 	Graphics2D::SetTransform(scrollMatrix);
 
@@ -552,8 +647,10 @@ void Editor::draw() {
 	}
 
 	//ノート情報
-	for (auto& note : m_playableNotes) {
-		note->drawInfo();
+	if (m_gui.toggleSwitch(L"show-info").isRight) {
+		for (auto& note : m_playableNotes) {
+			note->drawInfo();
+		}
 	}
 
 	//テンポ変更

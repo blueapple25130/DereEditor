@@ -6,6 +6,7 @@
 
 enum class EditType {
 	None = -1,
+	Measure,
 	PlayableNote,
 	ChangeTempo,
 };
@@ -15,12 +16,13 @@ private:
 	std::vector<std::shared_ptr<Measure>> m_measures;
 	std::vector<std::shared_ptr<PlayableNote>> m_playableNotes;
 	std::vector<std::shared_ptr<ChangeTempo>> m_changeTempos;
-	const int BeatPerHeight = 100;
+	const int m_beatPerHeight = 80;
 	const int m_LaneOffset = 125;
 	const int m_LaneWidth = 70;
-	int m_division = 8;
+	size_t m_division = 1;
 	int m_channel = 0;
 	int m_laneCount = 5;
+	std::array<int, 8> m_divisions{ 4,8,16,32,64,12,24,48 };
 	double m_standardTempo = 120;
 	double m_offset = 0;
 	const int m_gridOffset = 60;
@@ -28,7 +30,6 @@ private:
 	const size_t MEASURE_MIN = 1;
 	const size_t MEASURE_DEFAULT = 200;
 	double m_zoom = 1.0;
-	const Rect m_rect;
 	size_t m_selectedMeasure = 0;
 	GUI m_gui;
 	Rect m_selectedRect;
@@ -58,6 +59,10 @@ private:
 
 	void channelUp();
 	void channelDown();
+
+	void divisionUp();
+	void divisionDown();
+	int getDivision();
 
 	void addMeasure();
 	void removeMeasure();
