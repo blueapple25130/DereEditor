@@ -586,7 +586,7 @@ void Editor::draw() {
 
 	Graphics2D::ClearTransform();
 
-	const Mat3x2 scrollMatrix = Mat3x2::Identity().translate(0, Window::ClientRect().h - m_gridOffset - getScroll());
+	const Mat3x2 scrollMatrix = Mat3x2::Identity().translate(0, Window::ClientRect().h - m_gridOffset - static_cast<int>(getScroll()));
 
 	const Line divLine(getLaneOffset() - m_LaneWidth / 2, -0.5, getLaneOffset() - m_LaneWidth / 2 + m_LaneWidth * (m_laneCount + 1), -0.5);
 	const Line laneLine(-0.5, 0, -0.5, Window::ClientRect().h);
@@ -609,14 +609,14 @@ void Editor::draw() {
 		double gridHeight = getBeatPerHeight() * 4 / getDivision();
 		double y = measureBeginY;
 
-		divLine.movedBy(0, y).draw(Palette::Green);
+		divLine.movedBy(0, static_cast<int>(y)).draw(Palette::Green);
 
 		int emphasizeInterval = getDivision() / 4;
 
 		for (int i = 1; i < lineCount; i++)
 		{
 			y -= gridHeight;
-			divLine.movedBy(0, y).draw(i % emphasizeInterval == 0 ? Palette::White : Palette::Gray);
+			divLine.movedBy(0, static_cast<int>(y)).draw(i % emphasizeInterval == 0 ? Palette::White : Palette::Gray);
 		}
 
 		measure->BeginY = measureBeginY;
