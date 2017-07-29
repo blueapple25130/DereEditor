@@ -1,12 +1,13 @@
 #include "PlayableNote.h"
 
 
-PlayableNote::PlayableNote(int tick, int lane, int channel, NoteType type) :
+PlayableNote::PlayableNote(int tick, int startPos, int finishPos, int channel, NoteType type) :
 	Note(tick)
 {
 	m_type = type;
 	Channel = channel;
-	Lane = lane;
+	StartPos = startPos;
+	FinishPos = finishPos;
 }
 
 void PlayableNote::draw() const {
@@ -31,14 +32,19 @@ void PlayableNote::draw() const {
 }
 
 void PlayableNote::drawInfo() const {
-
+	FontAsset(L"editor")(StartPos + 1).drawAt(m_position, Palette::Black);
+	FontAsset(L"editor")(Channel).drawAt(m_position-Point(25,25), Palette::Red);
 }
 
 void PlayableNote::drawRibbon() const {
-	if(ConnectNote!=nullptr)
+	if (ConnectNote != nullptr)
 		Line(m_position, ConnectNote->m_position).draw(30, Color(210, 255, 255));
 }
 
 NoteType PlayableNote::getNoteType() {
 	return m_type;
+}
+
+void PlayableNote::setStartPos(int lane) {
+	StartPos = lane;
 }

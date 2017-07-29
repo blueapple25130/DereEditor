@@ -9,10 +9,11 @@ private:
 public:
 	std::shared_ptr<PlayableNote> ConnectNote = nullptr;
 	int Channel;
-	int Lane;
+	int StartPos;
+	int FinishPos;
 	bool IsJudged = false;
 
-	PlayableNote(int tick, int lane, int channel, NoteType type);
+	PlayableNote(int tick, int startPos, int finishPos, int channel, NoteType type);
 
 	PlayableNote() = default;
 	~PlayableNote() = default;
@@ -24,4 +25,6 @@ public:
 	void drawInfo() const;
 
 	NoteType getNoteType();
+
+	void setStartPos(int lane);
 };
