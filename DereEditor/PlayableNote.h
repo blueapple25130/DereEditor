@@ -7,7 +7,8 @@ private:
 	NoteType m_type;
 
 public:
-	std::shared_ptr<PlayableNote> ConnectNote = nullptr;
+	std::shared_ptr<PlayableNote> PlevNote = nullptr;
+	std::shared_ptr<PlayableNote> NextNote = nullptr;
 	int Channel;
 	int StartPos;
 	int FinishPos;

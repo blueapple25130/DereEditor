@@ -37,8 +37,8 @@ void PlayableNote::drawInfo() const {
 }
 
 void PlayableNote::drawRibbon() const {
-	if (ConnectNote != nullptr)
-		Line(m_position, ConnectNote->m_position).draw(30, Color(210, 255, 255));
+	if (NextNote != nullptr)
+		Line(m_position, NextNote->m_position).draw(30, Color(210, 255, 255));
 }
 
 NoteType PlayableNote::getNoteType() {
