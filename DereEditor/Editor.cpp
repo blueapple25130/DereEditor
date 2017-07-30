@@ -35,28 +35,25 @@ void Editor::updateNoteState() {
 	}
 
 	for (auto currentNote = m_playableNotes.begin(); currentNote != m_playableNotes.end(); ++currentNote) {
-		(*currentNote)->ConnectNote = nullptr;
+		(*currentNote)->PlevNote = nullptr;
+		(*currentNote)->NextNote = nullptr;
 		switch ((*currentNote)->getNoteType())
 		{
 		case NoteType::LFlick:
 		case NoteType::RFlick:
 		{
-			auto connectNote = std::find_if(m_playableNotes.begin(), m_playableNotes.end(), [&](std::shared_ptr<PlayableNote> x) {return x->Time > (*currentNote)->Time &&  x->Channel == (*currentNote)->Channel && x->Time - (*currentNote)->Time < 1.0; });
+			auto connectNote = std::find_if(m_playableNotes.begin(), m_playableNotes.end(), [&](std::shared_ptr<PlayableNote> x) {
+				return x->Time > (*currentNote)->Time &&  x->Channel == (*currentNote)->Channel && x->Time - (*currentNote)->Time < 1.0
+					&& x->PlevNote == nullptr
+					&& (x->getNoteType() == NoteType::LFlick || x->getNoteType() == NoteType::RFlick)
+					&& ((*currentNote)->Channel % 4 < 2 ? (
+					(*currentNote)->getNoteType() == NoteType::LFlick ?
+						x->FinishPos < (*currentNote)->FinishPos :
+						x->FinishPos >(*currentNote)->FinishPos) : true);
+			});
 			if (connectNote != m_playableNotes.end()) {
-				if ((*connectNote)->Channel % 4 < 2) {
-					if ((*connectNote)->FinishPos < (*currentNote)->FinishPos && (*currentNote)->getNoteType() == NoteType::LFlick && ((*connectNote)->getNoteType() == NoteType::LFlick || (*connectNote)->getNoteType() == NoteType::RFlick))
-					{
-						(*currentNote)->ConnectNote = (*connectNote);
-					}
-					else if ((*connectNote)->FinishPos > (*currentNote)->FinishPos && (*currentNote)->getNoteType() == NoteType::RFlick && ((*connectNote)->getNoteType() == NoteType::LFlick || (*connectNote)->getNoteType() == NoteType::RFlick))
-					{
-						(*currentNote)->ConnectNote = (*connectNote);
-
-					}
-				}
-				else if ((*connectNote)->getNoteType() == NoteType::LFlick || (*connectNote)->getNoteType() == NoteType::RFlick) {
-					(*currentNote)->ConnectNote = (*connectNote);
-				}
+				(*currentNote)->NextNote = (*connectNote);
+				(*connectNote)->PlevNote = (*currentNote);
 			}
 		}
 		break;
@@ -64,17 +61,26 @@ void Editor::updateNoteState() {
 		{
 			auto connectNote = std::find_if(m_playableNotes.begin(), m_playableNotes.end(), [&](std::shared_ptr<PlayableNote> x) {return x->Time > (*currentNote)->Time && x->FinishPos == (*currentNote)->FinishPos; });
 			if (connectNote != m_playableNotes.end())
-				(*currentNote)->ConnectNote = (*connectNote);
+				(*currentNote)->NextNote = (*connectNote);
 		}
 		break;
 		case NoteType::Slide:
 		{
 			auto connectNote = std::find_if(m_playableNotes.begin(), m_playableNotes.end(), [&](std::shared_ptr<PlayableNote> x) {return x->Time > (*currentNote)->Time && x->Channel == (*currentNote)->Channel; });
 			if (connectNote != m_playableNotes.end())
-				(*currentNote)->ConnectNote = (*connectNote);
+				(*currentNote)->NextNote = (*connectNote);
 		}
 		break;
 		}
+	}
+}
+
+void Editor::updateMeasureState() {
+	double currentLength = 1.0;
+	for (auto& measure : m_measures) {
+		if (measure->Rhythm != nullptr)
+			currentLength = measure->Rhythm->getLength();
+		measure->setLength(currentLength);
 	}
 }
 
@@ -151,6 +157,7 @@ void Editor::addMeasure() {
 
 	m_measures.insert(m_measures.begin() + m_selectedMeasure, std::make_shared<Measure>());
 	m_selectedMeasure;
+	updateMeasureState();
 	updateNoteState();
 }
 
@@ -166,6 +173,7 @@ void Editor::removeMeasure() {
 			if (m_measures.size() == m_selectedMeasure) {
 				--m_selectedMeasure;
 			}
+			updateMeasureState();
 			updateNoteState();
 		}
 	}
@@ -174,17 +182,26 @@ void Editor::removeMeasure() {
 		if (m_measures.size() == m_selectedMeasure) {
 			--m_selectedMeasure;
 		}
+		updateMeasureState();
 		updateNoteState();
 	}
 }
 
-void Editor::setMeasureLength() {
-	double length = Parse<double>(m_gui.textField(L"measure-length").text);
-	if (length <= 0) {
+void Editor::setMeasureRhythm() {
+	String str = m_gui.textField(L"measure-rhythm").text;
+	if (str.indexOf(L"/") == String::npos) {
+		MessageBox::Show(L"4/4形式で入力してください");
+		return;
+	}
+	auto nums = str.split(L'/');
+	int numer = Parse<int>(nums[0]);
+	int denom = Parse<int>(nums[1]);
+	if (numer <= 0 || denom <= 0) {
 		MessageBox::Show(L"小節の長さは0以下に設定出来ません。");
 		return;
 	}
 
+	/*
 	if (m_measures[m_selectedMeasure]->getNotes().end() != std::find_if(m_measures[m_selectedMeasure]->getNotes().begin(), m_measures[m_selectedMeasure]->getNotes().end(), [&](std::shared_ptr<Note> x) {return x->Tick >= length * 768; })) {
 		if (MessageBox::Show(L"ノートが含まれています。小節の長さを変更しますか？", MessageBoxStyle::YesNo) == MessageBoxCommand::Yes) {
 			for (auto it = m_measures[m_selectedMeasure]->getNotes().begin(); it != m_measures[m_selectedMeasure]->getNotes().end();) {
@@ -199,8 +216,15 @@ void Editor::setMeasureLength() {
 		else {
 			return;
 		}
-	}
-	m_measures[m_selectedMeasure]->setLength(length);
+	}*/
+	m_measures[m_selectedMeasure]->Rhythm = std::make_shared<Rhythm>(numer,denom);
+	updateMeasureState();
+	updateNoteState();
+}
+
+void Editor::removeMeasureRhythm() {
+	m_measures[m_selectedMeasure]->Rhythm = nullptr;
+	updateMeasureState();
 	updateNoteState();
 }
 
@@ -334,9 +358,9 @@ Editor::Editor() :
 	m_gui.addln(L"remove-measure", GUIButton::Create(L"削除"));
 
 	m_gui.add(GUIText::Create(L"拍子変更　　"));
-	m_gui.add(L"measure-length", GUITextField::Create(none));
-	m_gui.add(L"set-measure", GUIButton::Create(L"変更"));
-	m_gui.addln(L"set-measure", GUIButton::Create(L"削除"));
+	m_gui.add(L"measure-rhythm", GUITextField::Create(none));
+	m_gui.add(L"set-rhythm", GUIButton::Create(L"変更"));
+	m_gui.addln(L"remove-rhythm", GUIButton::Create(L"削除"));
 
 	m_gui.add(GUIHorizontalLine::Create());
 
@@ -356,12 +380,12 @@ Editor::Editor() :
 
 
 	m_gui.textField(L"tempo").setText(L"120");
-	m_gui.textField(L"measure-length").setText(L"4/4");
+	m_gui.textField(L"measure-rhythm").setText(L"4/4");
 	m_gui.textField(L"standard-tempo").setText(L"120");
 	m_gui.textField(L"offset").setText(L"0");
 
 	m_gui.textField(L"tempo").style.width = 70;
-	m_gui.textField(L"measure-length").style.width = 70;
+	m_gui.textField(L"measure-rhythm").style.width = 70;
 	m_gui.textField(L"standard-tempo").style.width = 70;
 	m_gui.textField(L"offset").style.width = 70;
 
@@ -387,8 +411,11 @@ void Editor::update() {
 	else if (m_gui.button(L"remove-measure").pushed) {
 		removeMeasure();
 	}
-	else if (m_gui.button(L"set-measure").pushed) {
-		setMeasureLength();
+	else if (m_gui.button(L"set-rhythm").pushed) {
+		setMeasureRhythm();
+	}
+	else if (m_gui.button(L"remove-rhythm").pushed) {
+		removeMeasureRhythm();
 	}
 	else if (m_gui.button(L"channel-up").pushed) {
 		channelUp();
@@ -479,7 +506,7 @@ void Editor::update() {
 		}
 	}
 
-	if (!getMusic().isPlaying()) {
+	if (!getMusic().isPlaying() && !Input::KeyShift.pressed && Mouse::Wheel() != 0) {
 		double seekTime = getMusic().streamPosSec() - 0.1*Mouse::Wheel();
 		seekTime =
 			seekTime < 0 ? seekTime = 0 :
@@ -631,9 +658,11 @@ void Editor::draw() {
 
 	Graphics2D::SetTransform(scrollMatrix);
 
-	//小節番号
+	//小節番号/拍子
 	for (size_t i = 0; i < m_measures.size(); ++i) {
-		FontAsset(L"editor")(Pad(i, { 3, L'0' })).drawAt(getLaneOffset() - 70, m_measures[i]->BeginY);
+		FontAsset(L"editor")(Pad(i, { 3, L'0' })).drawAt(divLine.begin.x - 35, m_measures[i]->BeginY);
+		if (m_measures[i]->Rhythm != nullptr)
+			FontAsset(L"editor")(m_measures[i]->Rhythm->toString()).drawAt(divLine.end.x + 40, m_measures[i]->BeginY);
 	}
 
 	//帯
@@ -659,7 +688,7 @@ void Editor::draw() {
 	}
 
 	//小節選択
-	Triangle(getLaneOffset() - 110, m_measures[m_selectedMeasure]->BeginY, 15, 90_deg).draw(Palette::Red);
+	Triangle(divLine.begin.x - 75, m_measures[m_selectedMeasure]->BeginY, 15, 90_deg).draw(Palette::Red);
 
 	Println(L"Notes:", m_playableNotes.size());
 }

@@ -37,6 +37,11 @@ private:
 	Point m_selectEnd;
 
 	/*
+	小節の更新がある時、必ず呼ぶ
+	*/
+	void updateMeasureState();
+
+	/*
 	ノート配置の更新がある時、必ず呼ぶ
 	*/
 	void updateNoteState();
@@ -66,7 +71,8 @@ private:
 
 	void addMeasure();
 	void removeMeasure();
-	void setMeasureLength();
+	void setMeasureRhythm();
+	void removeMeasureRhythm();
 
 	void addLane();
 	void removeLane();
