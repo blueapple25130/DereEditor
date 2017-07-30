@@ -12,7 +12,7 @@ void Main()
 	SoundAsset::Register(L"tap", L"/3000");
 	SoundAsset::Register(L"flick", L"/3001");
 	SoundAsset::Register(L"slide", L"/3002");
-	SoundAsset::Register(L"music", L"C:/Users/work/Documents/346lab/music/Dandan.ogg");
+	SoundAsset::Register(L"music", L"C:/Users/work/Documents/346lab/music/soflan_chan.ogg");
 	FontAsset::Register(L"editor", 16);
 
 	Editor editor;
