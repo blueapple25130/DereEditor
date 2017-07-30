@@ -15,9 +15,3 @@ double Measure::getLength() {
 void Measure::setLength(double length) {
 	m_length = length;
 }
-
-void Measure::setLength(int numer, int denom) {
-	m_numer = numer;
-	m_denom = denom;
-	m_length = static_cast<double>(m_numer) / m_denom;
-}

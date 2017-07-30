@@ -1,11 +1,10 @@
 #pragma once
 #include "Note.h"
+#include "Rhythm.h"
 
 class Measure {
 private:
 	double m_length = 1.0;
-	int m_numer = 4;
-	int m_denom = 4;
 	std::vector<std::shared_ptr<Note>> m_notes;
 public:
 
@@ -15,6 +14,7 @@ public:
 	double BeginY;
 	double EndY;
 	double LastLineY;
+	std::shared_ptr<Rhythm> Rhythm = nullptr;
 
 	std::vector<std::shared_ptr<Note>>& getNotes();
 
@@ -23,6 +23,4 @@ public:
 	double getLength();
 
 	void setLength(double length);
-
-	void setLength(int numer, int denom);
 };
