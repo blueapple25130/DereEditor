@@ -169,6 +169,7 @@
     <ClCompile Include="Measure.cpp" />
     <ClCompile Include="Note.cpp" />
     <ClCompile Include="PlayableNote.cpp" />
+    <ClCompile Include="Rhythm.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Resource.rc" />
@@ -289,6 +290,7 @@
     <ClInclude Include="Measure.h" />
     <ClInclude Include="Note.h" />
     <ClInclude Include="PlayableNote.h" />
+    <ClInclude Include="Rhythm.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
