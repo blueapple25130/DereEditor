@@ -52,7 +52,9 @@
 // App Resource
 100		ICON	"Icon.ico"
 101		FILE	"Engine/Splash.png"
-2000	FILE	"Resources/notes.png"
+2000	FILE	"Resources/notes.png"	
+2001	FILE	"Resources/icons.png"
 3000	FILE	"Resources/tap.ogg"
 3001	FILE	"Resources/flick.ogg"
 3002	FILE	"Resources/slide.ogg"
+3003	FILE	"Resources/none.ogg"
