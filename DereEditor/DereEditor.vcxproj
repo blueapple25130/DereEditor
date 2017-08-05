@@ -165,6 +165,7 @@
     <ClCompile Include="ChangeTempo.cpp" />
     <ClCompile Include="Deleste.cpp" />
     <ClCompile Include="Editor.cpp" />
+    <ClCompile Include="GUITextureButton.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Measure.cpp" />
     <ClCompile Include="Note.cpp" />
@@ -287,6 +288,7 @@
     <ClInclude Include="ChangeTempo.h" />
     <ClInclude Include="Deleste.h" />
     <ClInclude Include="Editor.h" />
+    <ClInclude Include="GUITextureButton.h" />
     <ClInclude Include="Measure.h" />
     <ClInclude Include="Note.h" />
     <ClInclude Include="PlayableNote.h" />
