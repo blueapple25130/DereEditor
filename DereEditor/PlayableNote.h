@@ -5,6 +5,7 @@
 class PlayableNote :public Note {
 private:
 	NoteType m_type;
+	double m_delesteCharPos;
 
 public:
 	std::shared_ptr<PlayableNote> PlevNote = nullptr;
@@ -15,6 +16,7 @@ public:
 	bool IsJudged = false;
 
 	PlayableNote(int tick, int startPos, int finishPos, int channel, NoteType type);
+	PlayableNote(double charPos, int startPos, int finishPos, int channel, NoteType type);
 
 	PlayableNote() = default;
 	~PlayableNote() = default;
@@ -28,4 +30,6 @@ public:
 	NoteType getNoteType();
 
 	void setStartPos(int lane);
+
+	double getDelesteCharPos();
 };

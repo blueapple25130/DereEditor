@@ -2,11 +2,11 @@
 #include <Siv3D.hpp>
 
 enum class NoteType {
+	LFlick = 1,
 	Tap,
+	RFlick,
 	Long,
 	Slide,
-	LFlick,
-	RFlick,
 };
 
 class Note {

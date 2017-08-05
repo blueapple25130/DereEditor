@@ -9,10 +9,11 @@ void Main()
 
 	//アセットロード
 	TextureAsset::Register(L"notes", L"/2000");
+	TextureAsset::Register(L"icons", L"/2001");
 	SoundAsset::Register(L"tap", L"/3000");
 	SoundAsset::Register(L"flick", L"/3001");
 	SoundAsset::Register(L"slide", L"/3002");
-	SoundAsset::Register(L"music", L"C:/Users/work/Documents/346lab/music/soflan_chan.ogg");
+	SoundAsset::Register(L"none", L"/3003");
 	FontAsset::Register(L"editor", 16);
 
 	Editor editor;
@@ -23,8 +24,6 @@ void Main()
 		ClearPrint();
 		Println(L"[Info]");
 		Println(L"FPS:", Profiler::FPS());
-		Println(L"DrawCall:", Profiler::Graphics().num_drawCalls());
-		Println(L"Time:", SoundAsset(L"music").streamPosSec());
 		editor.update();
 		editor.draw();
 	}

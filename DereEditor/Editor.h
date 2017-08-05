@@ -3,6 +3,7 @@
 #include "Note.h"
 #include "PlayableNote.h"
 #include "ChangeTempo.h"
+#include "Deleste.h"
 
 enum class EditType {
 	None = -1,
@@ -13,7 +14,6 @@ enum class EditType {
 
 class Editor {
 private:
-	std::vector<std::shared_ptr<Measure>> m_measures;
 	std::vector<std::shared_ptr<PlayableNote>> m_playableNotes;
 	std::vector<std::shared_ptr<ChangeTempo>> m_changeTempos;
 	const int m_beatPerHeight = 80;
@@ -32,9 +32,12 @@ private:
 	double m_zoom = 1.0;
 	size_t m_selectedMeasure = 0;
 	GUI m_gui;
+	GUI m_headerGui;
 	Rect m_selectedRect;
 	Point m_selectBegin;
 	Point m_selectEnd;
+	Deleste m_deleste;
+	bool m_statechanged = false;
 
 	/*
 	小節の更新がある時、必ず呼ぶ
@@ -80,8 +83,16 @@ private:
 	double getScroll();
 	void playSE();
 
-	const SoundAsset& getMusic();
+	void newFile();
+	void openFile();
+	void saveFile();
+	void saveAsFile();
 
+	void resetBeatmap();
+
+	const Sound& getMusic();
+
+	std::vector<std::shared_ptr<Measure>>& getMeasures();
 
 public:
 

@@ -10,6 +10,16 @@ PlayableNote::PlayableNote(int tick, int startPos, int finishPos, int channel, N
 	FinishPos = finishPos;
 }
 
+PlayableNote::PlayableNote(double charPos, int startPos, int finishPos, int channel, NoteType type) :
+	Note()
+{
+	m_delesteCharPos = charPos;
+	m_type = type;
+	Channel = channel;
+	StartPos = startPos;
+	FinishPos = finishPos;
+}
+
 void PlayableNote::draw() const {
 	switch (m_type)
 	{
@@ -47,4 +57,8 @@ NoteType PlayableNote::getNoteType() {
 
 void PlayableNote::setStartPos(int lane) {
 	StartPos = lane;
+}
+
+double PlayableNote::getDelesteCharPos() {
+	return m_delesteCharPos;
 }
